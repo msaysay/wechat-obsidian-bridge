@@ -1,0 +1,55 @@
+{
+  "_说明": "复制本文件为 config.json 后修改。带 _ 前缀的键是注释，可删。",
+
+  "_vaultPath": "你的 Obsidian 库根目录（Agent 的工作目录，库里的 CLAUDE.md/AGENTS.md 会被自动遵守）",
+  "vaultPath": "C:\\Users\\you\\Documents\\MyVault",
+
+  "_claudeExe": "claude 可执行文件绝对路径。npm 全局安装在 %APPDATA%\\npm\\node_modules\\@anthropic-ai\\claude-code\\bin\\claude.exe；原生安装用 `where claude` 查",
+  "claudeExe": "C:\\Users\\you\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\bin\\claude.exe",
+
+  "_proxy": "claude 子进程走的本地代理。中国大陆直连 Anthropic 会被 403 区域拦截，必填（Clash/v2ray 的 http 端口）；海外网络留空即可。微信链路不走此代理",
+  "proxy": "http://127.0.0.1:7890",
+
+  "_model": "留空=用你 Claude Code 的默认模型；也可填 sonnet / opus 等",
+  "model": "",
+
+  "maxTurns": 30,
+  "_agentTimeoutMs": "单轮 Agent 超时(毫秒)",
+  "agentTimeoutMs": 300000,
+  "_chunkSize": "微信单条消息最大长度，超出按段落切片",
+  "chunkSize": 1800,
+  "_lockPort": "单实例锁端口(防止两个桥抢消息)，冲突就换一个",
+  "lockPort": 37817,
+
+  "_streaming": "流式回复(Agent边想边回)。若微信里出现消息重复就关掉",
+  "streaming": true,
+  "_toolStatus": "干活时在微信里显示「⏳ 查资料/写笔记…」",
+  "toolStatus": true,
+
+  "_autoLockFirstUser": "true=第一个发消息的人自动锁定为 owner，其他人忽略。也可直接在 allowedUsers 里写死 id（形如 xxx@im.wechat，日志里能看到）",
+  "autoLockFirstUser": true,
+  "allowedUsers": [],
+
+  "_allowedTools": "Agent 可用的工具。默认只给读写笔记，不给 Bash/联网",
+  "allowedTools": "Read,Glob,Grep,Write,Edit",
+  "_disallowedTools": "库内禁写目录（权限层硬拦，不是嘱咐）。按你库的敏感目录改",
+  "disallowedTools": [
+    "Write(templates/**)", "Edit(templates/**)",
+    "Write(scripts/**)", "Edit(scripts/**)"
+  ],
+
+  "_链接自动入库": "以下三项可选。fetchPython+fetchScript 配好后，微信里发公众号链接会自动抓正文入库（需要装了 playwright 的 python 环境，脚本见 README）。不需要就留空",
+  "fetchPython": "",
+  "fetchScript": "",
+  "_updateIndexScript": "入库后要跑的索引脚本（可选，用系统 python 执行）",
+  "updateIndexScript": "",
+  "_ingestInstructions": "入库时给 Agent 的指令，按你库的笔记规范写；留空用内置通用指令",
+  "ingestInstructions": "",
+
+  "_dailyPush": "日报伪推送：iLink 不能主动发消息，但收到消息后24h内可回。每天到点用最近会话推一条（前提是24h内你发过消息）",
+  "dailyPush": {
+    "enabled": false,
+    "time": "08:15",
+    "prompt": "早上好。看一下库里有没有今天的日记/日报，有就提炼成200字内的纯文本摘要发我；没有就回：今天还没有记录。"
+  }
+}

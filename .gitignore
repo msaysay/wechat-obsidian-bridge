@@ -1,0 +1,8 @@
+# 运行时数据：登录 token、消息游标、会话映射、git 快照、日志 —— 都是隐私
+node_modules/
+data/
+*.log
+
+# 个人配置（用 *.example.* 作模板）
+config.json
+persona.md
