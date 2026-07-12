@@ -243,8 +243,22 @@ async function handleMessage(msg) {
   } catch (err) {
     await stopIndicators();
     console.error("[agent] 出错:", err.message);
-    await sender.abort(`出错了：${err.message.slice(0, 150)}\n再发一次试试，连着失败就回电脑看 data/bridge.log。`);
+    await sender.abort(friendlyError(err.message));
   }
+}
+
+/** 把常见报错翻译成微信里能看懂的人话 */
+function friendlyError(msg) {
+  if (/401|Invalid authentication|OAuth token has expired/i.test(msg)) {
+    return "Claude 登录过期了，需要回电脑重新登录一次：打开终端跑 claude，输入 /login 完成授权。弄完直接重发消息就行，桥不用重启。";
+  }
+  if (/403|Request not allowed/i.test(msg)) {
+    return "连不上 Claude（大陆网络被拦）。检查一下电脑上的代理软件是不是关了，开着的话确认 config.json 里 proxy 的端口对不对。";
+  }
+  if (/超时/.test(msg)) {
+    return "这个任务跑超时被我掐掉了。可以拆小一点再试，或者回电脑上处理。";
+  }
+  return `出错了：${msg.slice(0, 150)}\n再发一次试试，连着失败就回电脑看 data/bridge.log。`;
 }
 
 // ---------- 日报伪推送：iLink 不能主动发起，但收到消息后 24h 内可回 ----------
