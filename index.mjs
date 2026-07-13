@@ -355,8 +355,8 @@ function startDailyPush() {
 // ---------- 启动 ----------
 async function main() {
   console.log("╔════════════════════════════════════════╗");
-  console.log("║  微信 ↔ Obsidian 第二大脑桥 v0.2.0     ║");
-  console.log("║  流式回复 · 后悔药 · 链接入库 · 伪推送 ║");
+  console.log("║  微信 ↔ Obsidian 第二大脑桥 v0.3.0     ║");
+  console.log("║  流式·后悔药·链接入库·图片入库·伪推送 ║");
   console.log("╚════════════════════════════════════════╝");
   console.log(`库路径: ${config.vaultPath}`);
 
