@@ -23,10 +23,10 @@
   "_attachmentsDir": "微信发来的图片存到库里的哪个子目录(相对 vaultPath)。Obsidian 用 ![[路径]] 引用",
   "attachmentsDir": "attachments",
 
-  "_streaming": "流式回复(Agent边想边回)。若微信里出现消息重复就关掉",
-  "streaming": true,
-  "_toolStatus": "干活时在微信里显示「⏳ 查资料/写笔记…」",
-  "toolStatus": true,
+  "_streaming": "流式回复(Agent边想边回)。iLink 的 GENERATING 更新在部分网络下不稳、会残留中间气泡，默认关；关掉后每次是一个干净的最终回复(靠'对方正在输入…'表示在干活)",
+  "streaming": false,
+  "_toolStatus": "干活时在微信里显示「⏳ 查资料/写笔记…」。依赖 streaming，默认关",
+  "toolStatus": false,
 
   "_autoLockFirstUser": "true=第一个发消息的人自动锁定为 owner，其他人忽略。也可直接在 allowedUsers 里写死 id（形如 xxx@im.wechat，日志里能看到）",
   "autoLockFirstUser": true,

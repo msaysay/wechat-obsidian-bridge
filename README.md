@@ -86,7 +86,7 @@ npm start   # 弹出二维码 → 手机微信扫码授权 → 完事
 | `claudeExe` | claude 可执行文件绝对路径（npm 装的在 `%APPDATA%\npm\node_modules\@anthropic-ai\claude-code\bin\claude.exe`） |
 | `proxy` | claude 子进程走的本地代理。**大陆必填**（直连 Anthropic 会 403 Request not allowed）；海外留空。微信链路不走代理 |
 | `allowedTools` / `disallowedTools` | Agent 权限。默认只能读写笔记；把你库的模板/脚本目录加进 deny |
-| `streaming` / `toolStatus` | 流式回复与工具状态。若微信里消息重复显示，关掉 `streaming` |
+| `streaming` / `toolStatus` | 流式回复与工具状态，**默认关**（iLink 的 GENERATING 更新在部分网络下会残留中间气泡）。关掉后每次是一个干净的最终回复，靠"对方正在输入…"表示在干活 |
 | `fetchPython` / `fetchScript` | 链接入库功能（可选）：装好 playwright 的 python + 本仓库 `scripts/fetch_wechat.py` |
 | `ingestInstructions` | 入库时给 Agent 的指令，按你库的笔记规范写 |
 | `dailyPush` | 日报伪推送的时间与提示词 |
