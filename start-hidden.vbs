@@ -1,7 +1,7 @@
-' 开机自启（隐藏窗口运行，日志见 data\bridge.log）
-' 用法: 本文件留在项目目录里，在 shell:startup 文件夹中创建一个指向它的快捷方式
-'      （不要把文件本体复制过去，否则工作目录会解析错）。删除快捷方式即取消自启。
-Set fso = CreateObject("Scripting.FileSystemObject")
+' Launch the bridge hidden (no console window). Logs go to data\bridge.log
+' Usage: double-click this file, or put a shortcut to it in shell:startup
+Dim sh, here
 Set sh = CreateObject("WScript.Shell")
-sh.CurrentDirectory = fso.GetParentFolderName(WScript.ScriptFullName)
+here = Left(WScript.ScriptFullName, InStrRev(WScript.ScriptFullName, "\") - 1)
+sh.CurrentDirectory = here
 sh.Run "node index.mjs", 0, False
