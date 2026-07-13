@@ -25,6 +25,21 @@ function detectImageExt(buf) {
   return null;
 }
 
+/** 裁掉尾部填充：按格式的结束标记截断（AES/PKCS7 会在块尾补字节） */
+function trimTrailingPadding(buf, ext) {
+  if (ext === "jpg") {
+    const i = buf.lastIndexOf(Buffer.from([0xff, 0xd9])); // JPEG EOI
+    if (i >= 0 && i + 2 < buf.length) return buf.subarray(0, i + 2);
+  } else if (ext === "png") {
+    const i = buf.lastIndexOf(Buffer.from("IEND", "ascii")); // PNG IEND + 4字节CRC
+    if (i >= 0 && i + 8 < buf.length) return buf.subarray(0, i + 8);
+  } else if (ext === "gif") {
+    const i = buf.lastIndexOf(0x3b); // GIF trailer ';'
+    if (i >= 0 && i + 1 < buf.length) return buf.subarray(0, i + 1);
+  }
+  return buf;
+}
+
 /** 把各种编码的 key 归一成 16 字节 Buffer（AES-128） */
 function toKey16(k) {
   if (!k || typeof k !== "string") return [];
@@ -121,6 +136,8 @@ export async function saveImage(imageItem, { vaultPath, attachmentsDir, headers,
       lastErr = `下载到 ${raw.length} 字节，但既不是明文图片、解密也未得到合法图片(试了 ${cand.keys.length} 个key)`;
       continue;
     }
+
+    bytes = trimTrailingPadding(bytes, ext); // 去掉块对齐填充尾，字节精确
 
     // 落库
     const dir = path.join(vaultPath, attachmentsDir);
