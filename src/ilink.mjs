@@ -134,6 +134,7 @@ export class ILinkClient {
    * ret=-14 等 session 失效时抛 SessionExpiredError。
    */
   async pollLoop(onMessage) {
+    let failStreak = 0;
     while (true) {
       let data;
       try {
@@ -142,10 +143,18 @@ export class ILinkClient {
           { get_updates_buf: this.cursor, base_info: this.#baseInfo() },
           POLL_TIMEOUT_MS
         );
+        if (failStreak) {
+          console.log(`[ilink] 连接已恢复（此前失败 ${failStreak} 次）`);
+          failStreak = 0;
+        }
       } catch (err) {
         if (err.name === "AbortError") continue; // 长轮询自然超时
-        console.error("[ilink] 轮询出错:", err.message, "3秒后重试");
-        await sleep(3000);
+        failStreak++;
+        // 连续失败时退避 + 只在首次/每10次打日志，避免刷屏（常见于切网/VPN波动）
+        if (failStreak === 1 || failStreak % 10 === 0) {
+          console.error(`[ilink] 收消息连接中断（第 ${failStreak} 次，多为网络/VPN波动）: ${err.message}`);
+        }
+        await sleep(Math.min(3000 * failStreak, 15000));
         continue;
       }
 
