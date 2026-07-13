@@ -20,6 +20,8 @@
   "chunkSize": 1800,
   "_lockPort": "单实例锁端口(防止两个桥抢消息)，冲突就换一个",
   "lockPort": 37817,
+  "_attachmentsDir": "微信发来的图片存到库里的哪个子目录(相对 vaultPath)。Obsidian 用 ![[路径]] 引用",
+  "attachmentsDir": "attachments",
 
   "_streaming": "流式回复(Agent边想边回)。若微信里出现消息重复就关掉",
   "streaming": true,

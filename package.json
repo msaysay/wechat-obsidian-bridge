@@ -1,6 +1,6 @@
 {
   "name": "wechat-obsidian-bridge",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "微信 ↔ Obsidian 随身第二大脑桥：基于微信官方 iLink Bot 协议 + 本机 Claude Code，不依赖 OpenClaw。WeChat as a mobile gateway to your local Obsidian vault, powered by the official WeChat iLink bot protocol and Claude Code.",
   "type": "module",
   "main": "index.mjs",

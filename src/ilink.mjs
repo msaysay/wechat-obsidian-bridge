@@ -211,6 +211,13 @@ export class ILinkClient {
     return this.sendTextMessage(toUserId, contextToken, text);
   }
 
+  /** 下载 CDN 媒体时用的鉴权头（部分资源需要 bot token） */
+  mediaHeaders() {
+    const h = { "X-WECHAT-UIN": this.#randomUin() };
+    if (this.tokenData?.bot_token) h["Authorization"] = `Bearer ${this.tokenData.bot_token}`;
+    return h;
+  }
+
   // ---------- typing 指示器 ----------
 
   async #typingTicket(userId, contextToken) {
@@ -267,6 +274,13 @@ export function extractQuotedText(msg) {
     }
   }
   return null;
+}
+
+/** 取出消息里的所有图片 item（type=2） */
+export function extractImageItems(msg) {
+  return (msg.item_list || [])
+    .filter((i) => i.type === 2 && i.image_item)
+    .map((i) => i.image_item);
 }
 
 /** 语音消息若带官方转写文本则取出（不做本地 ASR，用户用输入法语音为主） */

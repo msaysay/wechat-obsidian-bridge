@@ -10,10 +10,11 @@ import net from "node:net";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import qrcode from "qrcode-terminal";
-import { ILinkClient, extractText, extractQuotedText, extractVoiceText, MSG_TYPES, sleep } from "./src/ilink.mjs";
+import { ILinkClient, extractText, extractQuotedText, extractVoiceText, extractImageItems, MSG_TYPES, sleep } from "./src/ilink.mjs";
 import { AgentBridge, splitMessage, TOOL_LABELS } from "./src/agent.mjs";
 import { VaultSnapshot } from "./src/snapshot.mjs";
 import { findWechatLinks, fetchWechatArticle, buildIngestPrompt, runProcess } from "./src/ingest.mjs";
+import { saveImage } from "./src/media.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const configFile = path.join(ROOT, "config.json");
@@ -168,17 +169,12 @@ async function handleMessage(msg) {
   appState.lastContext = { userId: from, contextToken, at: Date.now() };
   saveAppState();
 
-  if (!text) {
-    await ilink.sendText(from, contextToken, `收到你的${types}消息。目前只处理文字，图片先回电脑上弄。`);
-    return;
-  }
-
+  // 暗号（纯文本指令）先处理
   if (RESET_WORDS.has(text)) {
     agent.resetSession(from);
     await ilink.sendText(from, contextToken, "好，上下文已清空，开新话题吧。");
     return;
   }
-
   if (UNDO_WORDS.has(text)) {
     const r = await snapshot.undoLastAgent();
     await ilink.sendText(
@@ -189,6 +185,12 @@ async function handleMessage(msg) {
     return;
   }
 
+  const images = extractImageItems(msg);
+  if (!images.length && !text) {
+    await ilink.sendText(from, contextToken, `收到你的${types}消息。目前能处理文字和图片，语音/文件先回电脑上弄。`);
+    return;
+  }
+
   await ilink.startTyping(from, contextToken);
   const typingTimer = setInterval(() => ilink.startTyping(from, contextToken), 9000);
   const stopIndicators = async () => {
@@ -196,10 +198,42 @@ async function handleMessage(msg) {
     await ilink.stopTyping(from);
   };
 
-  // 公众号链接 → 桥先预抓正文，Agent 只管按规范写笔记（未配置抓取脚本则当普通消息处理）
   let prompt = quoted ? `（我在微信里引用了这条内容：「${quoted}」）\n\n${text}` : text;
   let isIngest = false;
-  const ingestEnabled = config.fetchPython && config.fetchScript;
+  let handledImage = false;
+
+  // 图片消息：桥先下载解密落库，再把库内路径交给 Agent 智能归档/插入引用
+  if (images.length) {
+    const stampBase = fileStamp();
+    const saved = [];
+    const failed = [];
+    for (let i = 0; i < images.length; i++) {
+      const stamp = images.length > 1 ? `${stampBase}_${i + 1}` : stampBase;
+      try {
+        const r = await saveImage(images[i], {
+          vaultPath: config.vaultPath,
+          attachmentsDir: config.attachmentsDir || "attachments",
+          headers: ilink.mediaHeaders(),
+          stamp,
+        });
+        if (r.ok) saved.push(r.relPath);
+        else failed.push(r.reason);
+      } catch (e) {
+        failed.push(e.message);
+      }
+    }
+    if (!saved.length) {
+      await stopIndicators();
+      await ilink.sendText(from, contextToken, `图片没存成：${failed[0] || "未知原因"}。（这功能刚上，可能要调，日志里已记下细节。）`);
+      return;
+    }
+    if (failed.length) console.log(`[media] ${failed.length}/${images.length} 张失败:`, failed.join(" | "));
+    handledImage = true;
+    prompt = buildImagePrompt(saved, text);
+  }
+
+  // 公众号链接 → 桥先预抓正文（图片消息跳过）
+  const ingestEnabled = !handledImage && config.fetchPython && config.fetchScript;
   const links = ingestEnabled ? findWechatLinks(text) : [];
   if (links.length) {
     await ilink.sendText(from, contextToken, "识别到公众号文章，抓取正文中（约30-60秒）…");
@@ -221,14 +255,15 @@ async function handleMessage(msg) {
     }
   }
 
+  const label = (text || (handledImage ? "图片归档" : "")).slice(0, 60).replace(/\n/g, " ");
   const sender = new StreamSender(from, contextToken);
   try {
-    await snapshot.commitAll(`snapshot: before ${text.slice(0, 60).replace(/\n/g, " ")}`);
+    await snapshot.commitAll(`snapshot: before ${label}`);
     const reply = await agent.run(from, prompt, (ev) => sender.onEvent(ev));
     await stopIndicators();
     await sender.finish(reply);
 
-    const committed = await snapshot.commitAll(`agent: ${text.slice(0, 60).replace(/\n/g, " ")}`);
+    const committed = await snapshot.commitAll(`agent: ${label}`);
     if (committed) console.log("[snapshot] 已记录本轮改动，微信发「撤销」可回滚");
 
     if (isIngest && config.updateIndexScript) {
@@ -245,6 +280,30 @@ async function handleMessage(msg) {
     console.error("[agent] 出错:", err.message);
     await sender.abort(friendlyError(err.message));
   }
+}
+
+/** 生成文件名时间戳：2026-07-13_223655_ab12 */
+function fileStamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const date = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  const time = `${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  const rand = crypto.randomUUID().slice(0, 4);
+  return `${date}_${time}_${rand}`;
+}
+
+/** 图片存好后给 Agent 的归档指令 */
+function buildImagePrompt(relPaths, caption) {
+  return [
+    `我在微信里发来 ${relPaths.length} 张图片，桥接层已经下载并存进库里了。Obsidian 引用写法如下：`,
+    relPaths.map((p) => `- ${p}   →  ![[${p}]]`).join("\n"),
+    caption ? `我随图说了：${caption}` : "",
+    "",
+    "请根据我们的对话上下文处理：",
+    "1. 如果这些图属于正在聊的某条笔记/日记，就用 Edit/Write 把 ![[路径]] 插进那条笔记的合适位置。",
+    "2. 如果没有明确归属，就在今天的日记里加一条、插入这些图，并简短问我要不要归到别处。",
+    "3. 纯文本回我：插到哪个文件了。注意——你看不到图片内容，只有文件路径，别编造图里是什么。",
+  ].filter(Boolean).join("\n");
 }
 
 /** 把常见报错翻译成微信里能看懂的人话 */
