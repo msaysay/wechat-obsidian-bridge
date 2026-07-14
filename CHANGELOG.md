@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0 (2026-07-14)
+
+- ✨ 可插拔 Agent 后端：`config.agentBackend` 在 `claude-code`(默认) 和 `openai` 间切换
+- ✨ OpenAI 兼容后端：内置 Agent 工具循环，让任何裸大模型（Kimi/DeepSeek/智谱GLM/OpenAI/本地Ollama…）也能真正读写你的库
+  - 库文件工具：read/write/append/edit/list_dir/search_notes，全部路径安全(不越库)+ `protectedDirs` 红线禁写
+  - 每用户会话持久化；可选 `openai.proxy`(海外服务用，需 `npm i undici`)
+- 🔧 `src/agent.mjs` 重构为后端分发器，claude-code 逻辑抽到 `src/backends/claudeCode.mjs`
+
 ## v0.3.0 (2026-07-13)
 
 - ✨ 图片入库：微信发图 → 桥下载微信 CDN → 必要时 AES-128-ECB 解密 → 存进库 `attachmentsDir` → Agent 用 `![[路径]]` 智能插入到相关笔记

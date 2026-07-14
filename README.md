@@ -33,6 +33,7 @@ Bot: 已撤销上一次改动（记一下：给老张寄两瓶酒…）。回滚
 |---|---|---|
 | 🟢 | **官方协议** | 走微信官方 `ilinkai.weixin.qq.com`（iLink / ClawBot），扫码授权，不是 iPad 协议那类封号路线 |
 | 🧠 | **真 Agent，不是关键词机器人** | 内核是本机 Claude Code：自己判断"这是要记下来还是要查库"，遵守你库里的 CLAUDE.md/AGENTS.md 规范 |
+| 🔌 | **模型可换** | 默认 Claude Code；也可切到 Kimi / DeepSeek / 智谱GLM / OpenAI / 本地 Ollama（内置 Agent 工具循环让裸模型也能读写你的库） |
 | ⚡ | **流式回复** | Agent 边想边回，消息在微信里实时生长（iLink `GENERATING→FINISH` 态），干活时显示「⏳ 查资料 / 写笔记…」 |
 | 🩹 | **后悔药** | 每轮改动自动 git 快照（仓库外置，**你的库里不出现 .git**，云同步无感知）。发「撤销」一键回滚，且只回滚 Agent 的提交、绝不误伤你手动的修改 |
 | 🔒 | **敢放手的权限设计** | 工具白名单只给读写笔记（无 Bash/联网）；敏感目录在权限层硬 deny，不是靠嘱咐 |
@@ -95,6 +96,43 @@ npm start   # 弹出二维码 → 手机微信扫码授权 → 完事
 
 **开机自启（Windows）**：在 `shell:startup` 文件夹里创建一个指向 `start-hidden.vbs` 的快捷方式（隐藏窗口运行，日志见 `data/bridge.log`）。macOS/Linux 可用 launchd/systemd 跑 `node index.mjs`。
 
+## 🔌 换用别的模型（Kimi / DeepSeek / GPT / 本地模型）
+
+不想用 Claude？可以换成更便宜、甚至国内直连的模型。但先说清一个**关键点**：
+
+> 这个桥的价值不在"调用某个模型聊天"，而在于 **Agent 能真正读写你的笔记库**。一个裸的 ChatGPT/Kimi 对话接口只会聊天、碰不了你的文件——所以我们内置了一个 **Agent 工具循环**：给模型定义读/写/追加/改/列目录/搜索这些库操作工具，模型决定调哪个，桥在你的库里安全执行（路径不越界、红线目录禁写），结果回给模型，循环到给出最终回复。
+
+两种后端，用 `config.json` 的 `agentBackend` 切换：
+
+| 后端 | 适合 | 说明 |
+|---|---|---|
+| `claude-code`（默认） | 有 Claude 订阅/API | 本机 Claude Code CLI，能力最强 |
+| `openai` | 想用便宜/国产/本地模型 | 任何 OpenAI 兼容 API + 桥内置工具循环 |
+
+切到 `openai` 后端：把 `agentBackend` 改成 `"openai"`，填好 `openai` 段：
+
+```jsonc
+"agentBackend": "openai",
+"openai": {
+  "baseUrl": "https://api.deepseek.com/v1",
+  "apiKey": "sk-...",
+  "model": "deepseek-chat",
+  "protectedDirs": ["templates", "scripts"]   // 只读红线，模型不能写
+}
+```
+
+常见预设（`baseUrl` · `model`）：
+
+| 提供商 | baseUrl | 示例 model | 备注 |
+|---|---|---|---|
+| Kimi（月之暗面） | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | 国内直连 |
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` | 国内直连、便宜 |
+| 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` | 国内直连、有免费额度 |
+| OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` | 大陆需 `openai.proxy` + `npm i undici` |
+| 本地 Ollama | `http://127.0.0.1:11434/v1` | `qwen2.5` | 完全离线 |
+
+**注意**：模型越弱，越可能把文件路径写错、编辑改坏。库操作场景建议用支持 function-calling 且中等以上能力的模型；重要笔记务必开着「撤销」快照。任何暴露 `/chat/completions` 且支持工具调用的服务理论上都能接（欢迎 PR 适配更多）。
+
 ## 🏗 工作原理
 
 ```
@@ -136,7 +174,7 @@ Obsidian 库（工具权限层限定可写目录）
 无依赖。本项目直接实现 iLink 协议（请求格式对齐官方 `@tencent-weixin/openclaw-weixin`），比整套 OpenClaw 轻两个数量级，且 Agent 内核是为"操作你的笔记库"专门调教的 Claude Code。
 
 **Claude 之外的模型？**
-Agent 层就是 spawn 一个 CLI 子进程，理论上任何兼容 headless `-p --output-format stream-json` 的 Agent CLI 都能换（欢迎 PR）。
+支持。`agentBackend: "openai"` 可接任何 OpenAI 兼容 API（Kimi/DeepSeek/智谱GLM/OpenAI/本地Ollama），桥内置的 Agent 工具循环让这些裸模型也能真正读写你的库。详见上面 [🔌 换用别的模型](#-换用别的模型kimi--deepseek--gpt--本地模型)。
 
 ## ⚠️ 免责声明
 

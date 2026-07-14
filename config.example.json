@@ -4,8 +4,25 @@
   "_vaultPath": "你的 Obsidian 库根目录（Agent 的工作目录，库里的 CLAUDE.md/AGENTS.md 会被自动遵守）",
   "vaultPath": "C:\\Users\\you\\Documents\\MyVault",
 
-  "_claudeExe": "claude 可执行文件绝对路径。npm 全局安装在 %APPDATA%\\npm\\node_modules\\@anthropic-ai\\claude-code\\bin\\claude.exe；原生安装用 `where claude` 查",
+  "_agentBackend": "用哪种 Agent 后端：'claude-code'(默认，本机 Claude Code CLI) 或 'openai'(任何 OpenAI 兼容 API + 桥内置工具循环，见下方 openai 段)",
+  "agentBackend": "claude-code",
+
+  "_claudeExe": "[claude-code 后端] claude 可执行文件绝对路径。npm 全局安装在 %APPDATA%\\npm\\node_modules\\@anthropic-ai\\claude-code\\bin\\claude.exe；原生安装用 `where claude` 查",
   "claudeExe": "C:\\Users\\you\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\bin\\claude.exe",
+
+  "_openai": "[openai 后端] 换用便宜的通用大模型时填这段，并把上面 agentBackend 改成 'openai'。任何暴露 /chat/completions 且支持 function-calling 的服务都行。桥会用内置工具循环让模型真正读写你的库",
+  "_openai_presets": "常见预设 baseUrl / model — Kimi(月之暗面): https://api.moonshot.cn/v1 · moonshot-v1-8k | DeepSeek: https://api.deepseek.com/v1 · deepseek-chat | 智谱GLM: https://open.bigmodel.cn/api/paas/v4 · glm-4-flash | OpenAI: https://api.openai.com/v1 · gpt-4o-mini(需proxy) | 本地Ollama: http://127.0.0.1:11434/v1 · qwen2.5",
+  "openai": {
+    "baseUrl": "https://api.deepseek.com/v1",
+    "apiKey": "sk-你的key",
+    "model": "deepseek-chat",
+    "temperature": 0.3,
+    "maxIterations": 12,
+    "_proxy": "只有 OpenAI 等海外服务在大陆才需要；国产模型(Kimi/DeepSeek/GLM)直连、留空。需要代理时先 npm i undici",
+    "proxy": "",
+    "_protectedDirs": "只读红线目录(相对库根)，模型不能写入。按你库的敏感目录填",
+    "protectedDirs": ["templates", "scripts"]
+  },
 
   "_proxy": "claude 子进程走的本地代理。中国大陆直连 Anthropic 会被 403 区域拦截，必填（Clash/v2ray 的 http 端口）；海外网络留空即可。微信链路不走此代理",
   "proxy": "http://127.0.0.1:7890",
