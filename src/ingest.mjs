@@ -1,6 +1,6 @@
 /**
  * 公众号链接自动入库：微信里甩一个 mp.weixin.qq.com 链接 →
- * 桥先用 playwright 脚本预抓正文（绕微信反爬）→ 再交给 Agent 按库规范写 source_summary。
+ * 桥先用 playwright 脚本预抓正文（绕微信反爬）→ 再交给 Agent 按库规范写成来源笔记。
  * 抓取是确定性步骤放在桥里做，Agent 只负责写笔记。
  */
 import { spawn } from "node:child_process";
