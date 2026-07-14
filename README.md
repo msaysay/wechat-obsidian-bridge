@@ -53,7 +53,7 @@ Bot: 已撤销上一次改动（记一下：给老张寄两瓶酒…）。回滚
 **安装**
 
 ```bash
-git clone https://github.com/<you>/wechat-obsidian-bridge.git
+git clone https://github.com/msaysay/wechat-obsidian-bridge.git
 cd wechat-obsidian-bridge
 npm install
 
