@@ -312,7 +312,10 @@ function friendlyError(msg) {
     return "Claude 登录过期了，需要回电脑重新登录一次：打开终端跑 claude，输入 /login 完成授权。弄完直接重发消息就行，桥不用重启。";
   }
   if (/403|Request not allowed/i.test(msg)) {
-    return "连不上 Claude（大陆网络被拦）。检查一下电脑上的代理软件是不是关了，开着的话确认 config.json 里 proxy 的端口对不对。";
+    return "连不上 Claude（大陆网络被拦）。检查一下电脑上的 VPN 是不是关了；如果 VPN 是 TUN/全局模式，把 config.json 里的 proxy 清空成 \"\" 即可。";
+  }
+  if (/ConnectionRefused|ECONNREFUSED|Unable to connect to API/i.test(msg)) {
+    return "连不上 Claude：config.json 里配的代理端口没人应答（多半是 VPN 换了或关了）。如果你的 VPN 是 TUN/全局模式，把 proxy 清空成 \"\" 让它直连就行。";
   }
   if (/超时/.test(msg)) {
     return "这个任务跑超时被我掐掉了。可以拆小一点再试，或者回电脑上处理。";
